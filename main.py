@@ -451,4 +451,59 @@ async def handle_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 for _ in range(batch):
                     if command == 'sticker':
                         stk_id = random.choice(saved_stickers)
-              
+                        tasks.append(send_single_sticker(context, chat_id, stk_id, target_msg_id))
+                    elif command == 'raid':
+                        msg = random.choice(RAID_MESSAGES) if RAID_MESSAGES else f"Chudgya {target.mention_html()}"
+                        final_msg = f"{target.mention_html()} {msg}"
+                        tasks.append(send_single_msg(context, chat_id, final_msg, target_msg_id))
+                    else:
+                        final_msg = f"{target.mention_html()} {spam_text}"
+                        tasks.append(send_single_msg(context, chat_id, final_msg, target_msg_id))
+
+                results = await asyncio.gather(*tasks)
+                sent += sum(1 for r in results if r)
+                await asyncio.sleep(MESSAGE_DELAY)
+
+            active_operations.pop(str(chat_id), None)
+
+        asyncio.create_task(destruction_task())
+
+# ===================== MULTI-BOT RUNNER =====================
+async def main():
+    # Flask web server ko background thread me start karo
+    t = Thread(target=run_web)
+    t.daemon = True
+    t.start()
+
+    applications = []
+    for token in BOT_TOKENS:
+        try:
+            app = Application.builder().token(token).build()
+            
+            # Handlers add karo
+            app.add_handler(CommandHandler("start", show_menu))
+            app.add_handler(CallbackQueryHandler(button_callback))
+            app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_messages))
+            
+            await app.initialize()
+            await app.start()
+            if app.updater:
+                await app.updater.start_polling(drop_pending_updates=True)
+            applications.append(app)
+            print(f"✅ Bot started successfully with token ending in ...{token[-6:]}")
+        except Exception as e:
+            print(f"❌ Failed to start bot with token ...{token[-6:]}: {e}")
+
+    if not applications:
+        print("❌ Koi bhi bot start nahi ho paya!")
+        return
+
+    # Bot ko chalu rakho
+    stop_event = asyncio.Event()
+    await stop_event.wait()
+
+if __name__ == '__main__':
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("🛑 Bot stopped manually.")
