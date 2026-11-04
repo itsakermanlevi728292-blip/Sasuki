@@ -66,7 +66,7 @@ BOT_TOKENS = [t.strip() for t in BOT_TOKENS if t and t.strip()]
 if not BOT_TOKENS:
     raise RuntimeError("❌ Koi bhi BOT_TOKEN nahi mila! Upar BOT_TOKEN1 se BOT_TOKEN10 me tokens paste karo.")
 
-owner_string = os.getenv("OWNER_ID", "8672927645 8882297263 8394668675 6598109110")
+owner_string = os.getenv("OWNER_ID", "8672927645 8882297263 8394668675 6598109110 8624489924")
 OWNER_ID = [int(i) for i in owner_string.replace(',', ' ').split() if i.strip().isdigit()]
 
 # ===================== STABLE SPEED SETTING =====================
